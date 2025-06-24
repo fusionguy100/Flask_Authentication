@@ -1,3 +1,4 @@
+import werkzeug.security
 from flask import Flask, render_template, request, url_for, redirect, flash, send_from_directory
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
@@ -38,8 +39,17 @@ def home():
     return render_template("index.html")
 
 
-@app.route('/register')
+@app.route('/register', methods= ['GET','POST'])
 def register():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        secure_password = werkzeug.security.generate_password_hash(password,method='pbkdf2:sha256', salt_length=8)
+        new_user = User(email = email, name = name, password = secure_password)
+        db.session.add(new_user)
+        db.session.commit()
+        return render_template('secrets.html', name = name)
     return render_template("register.html")
 
 
@@ -58,9 +68,9 @@ def logout():
     pass
 
 
-@app.route('/download')
+@app.route('/download/')
 def download():
-    pass
+    return send_from_directory('static', path = "files/cheat_sheet.pdf")
 
 
 if __name__ == "__main__":
